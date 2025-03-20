@@ -1,0 +1,29 @@
+
+
+
+{
+  "cli": {
+    "version": ">=15.0.10",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "internal"
+    },
+    "production": {
+      "distribution": "store",
+      "android": {
+        "buildType": "apk"
+      },
+      "autoIncrement": true,
+      "node": "20.18.1"
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

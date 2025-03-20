@@ -1,4 +1,52 @@
 {
-  "name": "Bio.App",
-  "slug": "Bio.App"
+  "expo": {
+    "name": "Bio.App",
+    "slug": "bioApp",
+    "version": "1.0.0",
+    "owner": "j_aimz",
+    "orientation": "default",
+    "icon": "./assets/img/logo.png",
+    "scheme": "myapp",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "platforms": [
+      "android",
+      "ios"
+    ],
+    "splash": {
+      "image": "./assets/img/logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/img/logo.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.j_aimz.bioApp",
+      "permissions": ["INTERNET", "ACCESS_NETWORK_STATE"]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/img/logo.png"
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "7d71d806-acca-4f40-a8ec-d75571180802"
+      }
+    }
+  }
 }

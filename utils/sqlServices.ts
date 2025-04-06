@@ -18,7 +18,7 @@ export const sqlSaveBioData = async (data: BioDataFormUpload): Promise<boolean> 
         data.dateOfBirth,
         data.stateOfOrigin,
         data.lga,
-        data.ward,
+        data.ward ?? null,
         data.address ?? null,
         data.contact,
         data.passportPhoto ?? null,  // Ensure NULL if empty
@@ -29,7 +29,7 @@ export const sqlSaveBioData = async (data: BioDataFormUpload): Promise<boolean> 
         data.selectedSkillCategory ?? null,  // Added skill category
         data.selectedSkill ?? null, 
         data.meansOfIdentification ?? null,
-        data.otherMeansOfIdentification ??
+        data.otherMeansOfIdentification ?? null,
         data.IdCardPhoto ?? null,
         data.isUploaded ?? false
       ]
@@ -45,11 +45,11 @@ export const sqlSaveBioData = async (data: BioDataFormUpload): Promise<boolean> 
 };
 
 // Function to fetch all BioData records
-export const sqlGetBioData = async () => {
+export const sqlGetBioData = async (): Promise<BioDataFormUpload[]> => {
   try {
     const results = await db.getAllAsync("SELECT * FROM BioData");
     console.log("Fetched BioData records:", results);
-    return results;
+    return results as BioDataFormUpload[];
   } catch (error) {
     console.error("Error fetching BioData:", error);
     return [];
@@ -58,7 +58,11 @@ export const sqlGetBioData = async () => {
 
 export const sqlGetUnuploadedBioData = async (): Promise<BioDataFormUpload[]>   => {
   try {
-    const results = await db.getAllAsync("SELECT * FROM BioData WHERE isUploaded = 0;");
+    // const results = await db.getAllAsync("SELECT * FROM BioData WHERE isUploaded = false;");
+    const results = await db.getAllAsync(`
+      SELECT * FROM BioData 
+      WHERE isUploaded IS NULL OR isUploaded = 0;
+    `);
     console.log("Fetched unuploaded BioData records:", results);
     return results as BioDataFormUpload[];
   } catch (error) {
@@ -79,24 +83,24 @@ export const sqlDeleteAllBioData = async (): Promise<boolean> => {
   }
 };
 
-export const sqlDeleteDatabase = async (): Promise<boolean> => {
-  try {
-    const dbPath = `${FileSystem.documentDirectory}SQLite/biodata.db`;
-    const fileInfo = await FileSystem.getInfoAsync(dbPath);
+// export const sqlDeleteDatabase = async (): Promise<boolean> => {
+//   try {
+//     const dbPath = `${FileSystem.documentDirectory}SQLite/biodata.db`;
+//     const fileInfo = await FileSystem.getInfoAsync(dbPath);
 
-    if (fileInfo.exists) {
-      await FileSystem.deleteAsync(dbPath);
-      console.log("Database deleted successfully!");
-      return true;
-    } else {
-      console.warn("Database file does not exist.");
-      return false;
-    }
-  } catch (error) {
-    console.error("Error deleting database:", error);
-    return false;
-  }
-};
+//     if (fileInfo.exists) {
+//       await FileSystem.deleteAsync(dbPath);
+//       console.log("Database deleted successfully!");
+//       return true;
+//     } else {
+//       console.warn("Database file does not exist.");
+//       return false;
+//     }
+//   } catch (error) {
+//     console.error("Error deleting database:", error);
+//     return false;
+//   }
+// };
 
 export const sqlGetBioDataCount = async (): Promise<number> => {
   try {

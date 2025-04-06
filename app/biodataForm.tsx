@@ -23,7 +23,6 @@ import { bioDataSchema } from "@/utils/zodValidation";
 import {
   isVoterCardUnique,
   sqlDeleteAllBioData,
-  sqlDeleteDatabase,
   sqlGetBioData,
   sqlSaveBioData,
 } from "@/utils/sqlServices";
@@ -300,11 +299,11 @@ export default function BiodataFormScreen() {
      
       const offlineSave = await handleSaveOffline({
         ...formData,
-        isUploaded,
+        isUploaded: isUploaded,
       });
     
 
-      console.log(offlineSave);
+      // console.log(offlineSave);
       if (!offlineSave) {
         Alert.alert("Fail", "Failed to save data please try again");
         setLoading(false);

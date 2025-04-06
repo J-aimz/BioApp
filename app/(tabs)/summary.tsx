@@ -1,47 +1,60 @@
-import { StyleSheet, Image, TouchableOpacity, View, Text, Alert } from 'react-native';
+import { StyleSheet, Image, TouchableOpacity, View, Text, Alert, Touchable, ScrollView, FlatList } from 'react-native';
 import { useEffect, useState } from 'react';
 import { sqlDeleteAllBioData, sqlGetBioData, sqlGetBioDataCount, sqlGetUnuploadedBioData } from '@/utils/sqlServices';
-import { collection, addDoc, writeBatch, doc } from 'firebase/firestore';
+import { collection, addDoc, writeBatch, doc, setDoc } from 'firebase/firestore';
 import { db } from '@/utils/firebase';
 import Spinner from 'react-native-loading-spinner-overlay';
 import ModalComponent from '@/components/ModalComponent';
 import NetInfo from "@react-native-community/netinfo";
+import { BioDataFormUpload } from '@/utils/types';
+import { setupDatabase } from '@/utils/database';
 
 
-export default function TabTwoScreen() {
+export default function Summary() {
   const [totalCount, setTotalCount] = useState(0);
   const date = new Date();
   const [isLoading, setIsLoading] = useState(false);
   const [operationIsSuccess, setOperationIsSuccess] = useState<boolean>(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [isConnected, setIsConnected] = useState<boolean | null>(null);
-
+  const [showList, setShowList] = useState(false); 
+  const [dataList, setDataList] = useState<BioDataFormUpload[]>([]); 
 
   useEffect(() => {
-    const fetchData = async () => {
-      setTotalCount(await sqlGetBioDataCount());
-    };
 
     //check for network
     const unsubscribe = NetInfo.addEventListener((state) => {
       setIsConnected(state.isConnected);
     });
 
+    // const loadData = async () => {
+    //   try {
+    //     // const db = getDatabase(); // ✅ Now safe
+    //     // const result = await getAllAsync(`SELECT * FROM BioData`);
+    //     const result = await sqlGetBioData();
+    //     setTotalCount(result.length);
+    //   } catch (error) {
+    //     console.error("Failed to load data:", error);
+    //   }
+    // };
 
-    fetchData();
+    // loadData();
+
+    datalist()
+
+    // fetchData();
     return () => unsubscribe();
   }, []);
 
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     const count = await sqlGetBioDataCount();
-  //     console.log("Setting totalCount:", count); 
-  //     setTotalCount(count);
-  //   };
-  
-  //   fetchData();
-  // }, []);
-  
+  //get the biodata from the local database to be displayed
+  const datalist = async () => {
+    const data = await sqlGetBioData();
+    setTotalCount(data.length);
+    setDataList(data);
+  }
+  // const fetchData = async () => {
+  //   setTotalCount(await sqlGetBioDataCount());
+  // };
 
   const formatDate = (date: Date) => {
     const options: Intl.DateTimeFormatOptions = {
@@ -52,68 +65,137 @@ export default function TabTwoScreen() {
     return date.toLocaleDateString(undefined, options);
   };
 
-  const uploadBioDataToFirebase = async () => {
-    setIsLoading(true)
+  // const uploadBioDataToFirebase = async () => {
     
+  //   if (!isConnected) {
+  //     setIsLoading(false)
+  //     Alert.alert('No Internet Connection', 'Please check your network connection and try again later.');
+  //     return;
+  //   }
+
+  //   try {
+  //     const bioDataRecords = await sqlGetUnuploadedBioData()
+
+  //     if (bioDataRecords.length === 0) {
+  //       const deleteSuccess = await sqlDeleteAllBioData();
+  //       if (deleteSuccess) {
+  //         console.log('Local database cleared after upload.');
+  //         await datalist()
+  //         setOperationIsSuccess(true)
+  //         setIsLoading(false)
+  //       } else {
+  //         console.warn('Failed to clear local database.');
+  //         setOperationIsSuccess(false) 
+  //         setIsLoading(false)
+  //         return
+  //       }
+  //       setModalVisible(true);
+  //       return;
+  //     }
+
+  //     let batch = writeBatch(db);
+  //     const collectionRef = collection(db, 'BioData');
+  //     let batchCount = 0;
+
+  //     for (const record of bioDataRecords) {
+  //       const docRef = doc(collectionRef); 
+  //       batch.set(docRef, record);
+  
+  //       batchCount++;
+  
+  //       if (batchCount === 500) {
+  //         await batch.commit();
+  //         batch = writeBatch(db); 
+  //         batchCount = 0;
+  //       }
+  //     }
+
+  //     if (batchCount > 0) {
+  //       await batch.commit();
+  //     }
+
+  //     const deleteSuccess = await sqlDeleteAllBioData();
+  //     console.log('Data uploaded successfully to Firebase!: ', deleteSuccess);
+  //     if (deleteSuccess) {
+  //       console.log('Local database cleared after upload.');
+  //       await datalist()
+  //       setOperationIsSuccess(true)
+  //     } else {
+  //       console.warn('Failed to clear local database.');
+  //       setOperationIsSuccess(false) 
+  //     }
+  //   } catch (error) {
+  //     console.error('Error uploading data:', error);
+  //     setOperationIsSuccess(false)
+  //   }
+
+  //   setIsLoading(false)
+  //   setModalVisible(true);
+
+  // };
+
+  const uploadBioDataToFirebase = async () => {
+      setIsLoading(true)
+
     if (!isConnected) {
-      setIsLoading(false)
+      setIsLoading(false);
       Alert.alert('No Internet Connection', 'Please check your network connection and try again later.');
       return;
     }
-
+  
     try {
-      const bioDataRecords = await sqlGetUnuploadedBioData()
-
+      const bioDataRecords = await sqlGetUnuploadedBioData();
+      // const bioDataRecords = await sqlGetBioData();
+  
       if (bioDataRecords.length === 0) {
-        setTotalCount(0);
-        setOperationIsSuccess(true)
-        // Alert.alert('No Data', 'There are no records to upload.');
+        const deleteSuccess = await sqlDeleteAllBioData();
+        if (deleteSuccess) {
+          console.log('Local database cleared after upload.');
+          await datalist();
+          setOperationIsSuccess(true);
+          setIsLoading(false);
+        } else {
+          console.warn('Failed to clear local database.');
+          setOperationIsSuccess(false);
+          setIsLoading(false);
+          return;
+        }
         setModalVisible(true);
-        setIsLoading(false)
         return;
       }
-
-      let batch = writeBatch(db);
+  
       const collectionRef = collection(db, 'BioData');
-      let batchCount = 0;
-
+  
       for (const record of bioDataRecords) {
-        const docRef = doc(collectionRef); 
-        batch.set(docRef, record);
-  
-        batchCount++;
-  
-        if (batchCount === 500) {
-          await batch.commit();
-          batch = writeBatch(db); 
-          batchCount = 0;
-        }
-
-       
+        // if (record.isUploaded === true || record.isUploaded == 1) {
+          // Skip the record if it has already been uploaded
+          // console.log('Record already uploaded:', record);
+        // }else{
+          const docRef = doc(collectionRef);
+          await setDoc(docRef, record); // Upload one record at a time
+        // }
       }
-
-      if (batchCount > 0) {
-        await batch.commit();
-      }
-
+  
+      // After uploading all records, delete the local data
       const deleteSuccess = await sqlDeleteAllBioData();
+      console.log('Data uploaded successfully to Firebase!');
       if (deleteSuccess) {
         console.log('Local database cleared after upload.');
-        setTotalCount(0);
-        setOperationIsSuccess(true)
+        await datalist();
+        setOperationIsSuccess(true);
       } else {
         console.warn('Failed to clear local database.');
-        setOperationIsSuccess(false) 
+        setOperationIsSuccess(false);
       }
     } catch (error) {
       console.error('Error uploading data:', error);
-      setOperationIsSuccess(false)
+      setOperationIsSuccess(false);
     }
-
-    setIsLoading(false)
+  
+    setIsLoading(false);
     setModalVisible(true);
-
   };
+  
 
   const confirmUpload = () => {
     Alert.alert(
@@ -130,17 +212,43 @@ export default function TabTwoScreen() {
     <View style={styles.container}>
       {/* Summary */}
       <View style={styles.summarySection}>
-        <View style={styles.row}>
-          <Image
-            source={require("../../assets/img/upload_img.png")}
-            style={styles.icon}
-          />
-          <View style={styles.info}>
-            <Text style={styles.label}>Total upload</Text>
-            <Text style={styles.count}>{totalCount}</Text>
+        <TouchableOpacity onPress={() => setShowList(!showList)} activeOpacity={0.4}>
+          <View style={styles.row}>
+            <Image
+              source={require("../../assets/img/upload_img.png")}
+              style={styles.icon}
+            />
+            <View style={styles.info}>
+              <Text style={styles.label}>Total upload</Text>
+              <Text style={styles.count}>{totalCount}</Text>
+            </View>
+            <Text style={styles.date}>{formatDate(date)}</Text>
           </View>
-          <Text style={styles.date}>{formatDate(date)}</Text>
-        </View>
+        </TouchableOpacity>
+
+
+        {/* <ScrollView style={styles.containerScroll}> */}
+          {
+            showList &&
+            <FlatList
+              data={dataList}
+              keyExtractor={(item, ind) => ind.toString()}
+              renderItem={({ item }) => (
+                <View style={styles.secondRow}>
+                  <Image
+                    source={{ uri: item.passportPhoto }}
+                    style={styles.avatar}
+                  />
+                  <View style={styles.info}>
+                    <Text style={styles.label}>Name</Text>
+                    <Text style={styles.count}>{item.firstName + " " + item.lastName}</Text>
+                  </View>
+                  <Text style={styles.date}>{item.gender}</Text>
+                </View>
+              )}
+            />
+          }
+          
       </View>
 
       {/* Footer */}
@@ -167,6 +275,21 @@ export default function TabTwoScreen() {
 }
 
 const styles = StyleSheet.create({
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 50,
+    borderWidth: 2,
+    borderColor: "#ccc",
+  },
+  containerScroll: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: "#fff",
+    alignSelf: "center",
+    width: "100%",
+    marginTop: 4, 
+  },
   container: {
     flex: 1,
     backgroundColor: '#fff',
@@ -197,6 +320,15 @@ const styles = StyleSheet.create({
   },
   info: {
     flex: 1,
+  },
+  secondRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+    gap: 6
   },
   label: {
     fontSize: 14,

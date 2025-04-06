@@ -34,7 +34,7 @@ const VotersCardInput: React.FC<VotersCardInputProps> = ({ value, onChangeText, 
         keyboardType="default" // FIXED: Allows text and numbers
         autoCorrect={false} 
         autoCapitalize="characters"
-        maxLength={24} 
+        maxLength={23} 
         onSelectionChange={(event) => setCursorPosition(event.nativeEvent.selection.start)}
         selection={{ start: cursorPosition, end: cursorPosition }} 
       />

@@ -1,8 +1,18 @@
 import { StyleSheet, Image, TouchableOpacity, View, Text } from 'react-native';
 
 import { Link, useRouter } from 'expo-router';
+import { useEffect } from 'react';
+import { setupDatabase } from '@/utils/database';
 
 export default function TabOneScreen() {
+  useEffect(() => {
+
+    const init = async () => {
+       setupDatabase();
+    };
+    init();
+  
+  },[])
 
   const router = useRouter();
 
